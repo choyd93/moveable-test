@@ -29,6 +29,7 @@
                         contenteditable="true"
                         @dblclick="toggleEditMode(index)"
                         @blur="toggleEditMode(index)"
+                        @click="selectElement(index)"
                     >
                         {{ element.content }}
                     </div>
@@ -38,7 +39,7 @@
             </div>
 
             <!-- 도구 패널 -->
-            <v-card class="tool-panel" outlined>
+            <div class="tool-panel">
                 <v-card-text v-if="currentToolPanel === 'text'">
                     <h4>텍스트 박스 위치</h4>
                     <v-text-field label="왼쪽" type="number" v-model="memoPosition.left" dense class="mb-4"></v-text-field>
@@ -55,10 +56,10 @@
                     <h4>폰트 설정</h4>
                     <v-select v-model="fontFamily" :items="['나눔스퀘어', 'Arial']" label="폰트 선택" dense class="mb-4"></v-select>
                     <v-text-field label="크기" type="number" v-model="fontSize" dense class="mb-4"></v-text-field>
-                    <v-btn text class="ma-1">B</v-btn>
-                    <v-btn text class="ma-1">I</v-btn>
-                    <v-btn text class="ma-1">U</v-btn>
-                    <v-btn text class="ma-1">A</v-btn>
+                    <v-btn class="ma-1">B</v-btn>
+                    <v-btn class="ma-1">I</v-btn>
+                    <v-btn class="ma-1">U</v-btn>
+                    <v-btn class="ma-1">A</v-btn>
 
                     <h4>배경 색상</h4>
                     <v-color-picker v-model="backgroundColor" flat hide-canvas class="mt-2"></v-color-picker>
@@ -67,10 +68,10 @@
                 <!-- 메모 버튼을 클릭했을 때 표시되는 패널 -->
                 <v-card-text v-if="currentToolPanel === 'memo'">
                     <h4>아이콘 모양</h4>
-                    <v-btn text class="ma-1">✔</v-btn>
-                    <v-btn text class="ma-1">«</v-btn>
-                    <v-btn text class="ma-1">▤</v-btn>
-                    <v-btn text class="ma-1">♫</v-btn>
+                    <v-btn class="ma-1">✔</v-btn>
+                    <v-btn class="ma-1">«</v-btn>
+                    <v-btn class="ma-1">▤</v-btn>
+                    <v-btn class="ma-1">♫</v-btn>
 
                     <h4>아이콘 위치</h4>
                     <v-text-field label="왼쪽" type="number" v-model="iconPosition.left" dense class="mb-4"></v-text-field>
@@ -79,7 +80,7 @@
                     <h4>아이콘 안내 문구</h4>
                     <v-textarea v-model="iconDescription" label="제목 '우리의 꿈' 해설" rows="2" dense class="mb-4"></v-textarea>
                 </v-card-text>
-            </v-card>
+            </div>
         </div>
 
         <!-- Moveable 컴포넌트 -->
@@ -119,6 +120,7 @@ const renderDirections = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'];
 
 const activeTool = ref(''); // 현재 선택된 도구 (텍스트, 메모 등)
 const currentToolPanel = ref('text'); // 현재 활성화된 도구 패널 (초기값: 텍스트)
+const selectedElementIndex = ref(null); // 선택된 요소의 인덱스
 
 const elements = reactive([]); // 컨테이너에 추가된 요소들
 const moveableTargets = ref([]); // Moveable.js로 제어할 DOM 요소들
@@ -248,6 +250,29 @@ const onResize = e => {
 const onRotate = e => {
     e.target.style.transform = e.drag.transform;
 };
+
+// 요소 선택 함수
+const selectElement = index => {
+    selectedElementIndex.value = index; // 선택된 요소의 인덱스 설정
+};
+
+// 백스페이스로 요소 삭제
+const handleKeyDown = event => {
+    if (event.key === 'Backspace' && selectedElementIndex.value !== null) {
+        elements.splice(selectedElementIndex.value, 1); // 요소 삭제
+        selectedElementIndex.value = null; // 선택 초기화
+    }
+};
+
+// 키보드 이벤트 리스너 추가
+onMounted(() => {
+    window.addEventListener('keydown', handleKeyDown);
+});
+
+// 키보드 이벤트 리스너 제거
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleKeyDown);
+});
 </script>
 
 <style scoped lang="scss">
@@ -307,7 +332,7 @@ const onRotate = e => {
 }
 
 .tool-panel {
-    width: 300px; /* 도구 패널 너비 */
+    width: 285px; /* 도구 패널 너비 */
     background-color: #f4f4f4;
     padding: 20px;
     border-left: 1px solid #ccc;
