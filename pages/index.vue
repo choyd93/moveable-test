@@ -2,12 +2,16 @@
     <div class="editor-container">
         <!-- 상단 버튼 패널 -->
         <div class="button-panel">
-            <button @click="setActiveTool('text')">텍스트</button>
-            <button @click="setActiveTool('memo')">메모</button>
-            <button @click="setActiveTool('contents')">콘텐츠</button>
-            <button @click="setActiveTool('link')">링크</button>
-            <button @click="setActiveTool('dark')">깜깜이</button>
-            <button @click="setActiveTool('line')">안내선</button>
+            <v-btn
+                v-for="tool in tools"
+                :key="tool.value"
+                @click="setActiveTool(tool.value)"
+                :class="{ active: activeTool === tool.value }"
+                color="white"
+                class="custom-button"
+            >
+                {{ tool.label }}
+            </v-btn>
         </div>
 
         <!-- 도화지와 도구 패널을 감싸는 영역 -->
@@ -95,6 +99,14 @@
 import { ref, reactive, nextTick } from 'vue';
 import Moveable from 'vue3-moveable';
 
+const tools = [
+    { value: 'text', label: '텍스트' },
+    { value: 'memo', label: '메모' },
+    { value: 'contents', label: '콘텐츠' },
+    { value: 'link', label: '링크' },
+    { value: 'dark', label: '깜깜이' },
+    { value: 'line', label: '안내선' }
+];
 const renderDirections = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'];
 
 const activeTool = ref(''); // 현재 선택된 도구 (텍스트, 메모 등)
@@ -227,7 +239,7 @@ const onRotate = e => {
 <style scoped lang="scss">
 .editor-container {
     display: flex;
-    flex-direction: column; /* 상단에 버튼 패널 배치 */
+    flex-direction: column;
     padding: 10px;
 }
 
@@ -240,20 +252,38 @@ const onRotate = e => {
     color: #fff;
     button {
         background-color: #fff;
+        cursor: pointer;
     }
+
+    .v-btn.active {
+        background-color: black !important;
+        color: white !important;
+    }
+}
+
+.custom-button {
+    background-color: white !important;
+    color: black !important;
+    border: 1px solid #ccc;
+    margin: 0 5px;
+}
+
+.custom-button.active {
+    background-color: black !important;
+    color: white !important;
 }
 
 /* 도화지와 도구 패널을 감싸는 영역 */
 .content-area {
-    display: flex; /* 도화지와 도구 패널을 나란히 배치 */
-    justify-content: center; /* 중앙 정렬 */
+    display: flex;
+    justify-content: center;
 }
 
 .container-wrapper {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #ffffff; /* 도화지 배경색 설정 */
+    background-color: #ffffff;
     padding: 30px;
     border-radius: 8px;
 }
