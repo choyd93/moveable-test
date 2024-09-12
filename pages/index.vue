@@ -38,40 +38,48 @@
             </div>
 
             <!-- 도구 패널 -->
-            <div class="tool-panel">
-                <div class="tool-section">
-                    <h4>메모지 위치</h4>
-                    <label>왼쪽 <input type="number" v-model="memoPosition.left" /></label>
-                    <label>위쪽 <input type="number" v-model="memoPosition.top" /></label>
-                </div>
-                <div class="tool-section">
-                    <h4>메모지 크기</h4>
-                    <label>가로 <input type="number" v-model="memoSize.width" /></label>
-                    <label>세로 <input type="number" v-model="memoSize.height" /></label>
-                </div>
-                <div class="tool-section">
+            <v-card class="tool-panel" outlined>
+                <v-card-text v-if="currentToolPanel === 'text'">
+                    <h4>텍스트 박스 위치</h4>
+                    <v-text-field label="왼쪽" type="number" v-model="memoPosition.left" dense class="mb-4"></v-text-field>
+                    <v-text-field label="위쪽" type="number" v-model="memoPosition.top" dense class="mb-4"></v-text-field>
+
+                    <h4>텍스트 박스 크기</h4>
+                    <v-text-field label="가로" type="number" v-model="memoSize.width" dense class="mb-4"></v-text-field>
+                    <v-text-field label="세로" type="number" v-model="memoSize.height" dense class="mb-4"></v-text-field>
+
                     <h4>내용</h4>
-                    <textarea v-model="memoContent" rows="4"></textarea>
-                    <label><input type="checkbox" v-model="applyToAll" /> 현재 메모지 설정을 전체에 적용</label>
-                </div>
-                <div class="tool-section">
+                    <v-textarea v-model="memoContent" label="메모지 내용" rows="4" dense class="mb-4"></v-textarea>
+                    <v-checkbox v-model="applyToAll" label="현재 메모지 설정을 전체에 적용" class="mb-4"></v-checkbox>
+
                     <h4>폰트 설정</h4>
-                    <select v-model="fontFamily">
-                        <option value="나눔스퀘어">나눔스퀘어</option>
-                        <option value="Arial">Arial</option>
-                        <!-- 추가할 수 있는 폰트들 -->
-                    </select>
-                    <label>크기 <input type="number" v-model="fontSize" /></label>
-                    <button>B</button>
-                    <button>I</button>
-                    <button>U</button>
-                    <button>A</button>
-                </div>
-                <div class="tool-section">
+                    <v-select v-model="fontFamily" :items="['나눔스퀘어', 'Arial']" label="폰트 선택" dense class="mb-4"></v-select>
+                    <v-text-field label="크기" type="number" v-model="fontSize" dense class="mb-4"></v-text-field>
+                    <v-btn text class="ma-1">B</v-btn>
+                    <v-btn text class="ma-1">I</v-btn>
+                    <v-btn text class="ma-1">U</v-btn>
+                    <v-btn text class="ma-1">A</v-btn>
+
                     <h4>배경 색상</h4>
-                    <input type="color" v-model="backgroundColor" />
-                </div>
-            </div>
+                    <v-color-picker v-model="backgroundColor" flat hide-canvas class="mt-2"></v-color-picker>
+                </v-card-text>
+
+                <!-- 메모 버튼을 클릭했을 때 표시되는 패널 -->
+                <v-card-text v-if="currentToolPanel === 'memo'">
+                    <h4>아이콘 모양</h4>
+                    <v-btn text class="ma-1">✔</v-btn>
+                    <v-btn text class="ma-1">«</v-btn>
+                    <v-btn text class="ma-1">▤</v-btn>
+                    <v-btn text class="ma-1">♫</v-btn>
+
+                    <h4>아이콘 위치</h4>
+                    <v-text-field label="왼쪽" type="number" v-model="iconPosition.left" dense class="mb-4"></v-text-field>
+                    <v-text-field label="위쪽" type="number" v-model="iconPosition.top" dense class="mb-4"></v-text-field>
+
+                    <h4>아이콘 안내 문구</h4>
+                    <v-textarea v-model="iconDescription" label="제목 '우리의 꿈' 해설" rows="2" dense class="mb-4"></v-textarea>
+                </v-card-text>
+            </v-card>
         </div>
 
         <!-- Moveable 컴포넌트 -->
@@ -110,6 +118,8 @@ const tools = [
 const renderDirections = ['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'];
 
 const activeTool = ref(''); // 현재 선택된 도구 (텍스트, 메모 등)
+const currentToolPanel = ref('text'); // 현재 활성화된 도구 패널 (초기값: 텍스트)
+
 const elements = reactive([]); // 컨테이너에 추가된 요소들
 const moveableTargets = ref([]); // Moveable.js로 제어할 DOM 요소들
 const isDragging = ref(false); // 드래그 상태
@@ -123,9 +133,13 @@ const fontFamily = ref('나눔스퀘어');
 const fontSize = ref(10);
 const backgroundColor = ref('#ffffff');
 
+const iconPosition = reactive({ left: 92, top: 73 });
+const iconDescription = ref('제목 "우리의 꿈" 해설');
+
 // 도구 선택 함수
 const setActiveTool = tool => {
     activeTool.value = tool;
+    currentToolPanel.value = tool; // 선택한 도구를 현재 패널로 설정
 };
 
 // 텍스트 또는 메모 편집 모드 전환 함수
@@ -248,7 +262,6 @@ const onRotate = e => {
     gap: 5px;
     background-color: #f4f4f4;
     padding: 10px;
-    border-radius: 8px;
     color: #fff;
     button {
         background-color: #fff;
@@ -276,13 +289,10 @@ const onRotate = e => {
 /* 도화지와 도구 패널을 감싸는 영역 */
 .content-area {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
 }
 
 .container-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
     background-color: #ffffff;
     padding: 30px;
     border-radius: 8px;
